@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login - Health Predictor</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: linear-gradient(to right, #74ebd5, #ACB6E5);
+  text-align: center;
+}
+
+.container {
+  background: white;
+  width: 350px;
+  margin: 80px auto;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+}
+
+input {
+  display: block;
+  margin: 10px auto;
+  padding: 10px;
+  width: 90%;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+button {
+  padding: 10px;
+  width: 95%;
+  background: #3498db;
+  color: white;
+  border: none;
+  margin-top: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+button:hover {
+  background: #2980b9;
+}
+
+#msg {
+  margin-top: 10px;
+  font-size: 14px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+  <h2>🔐 Login</h2>
+
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+
+  <button onclick="login()">Login</button>
+  <button onclick="signup()">Signup</button>
+
+  <p id="msg"></p>
+</div>
+
+<script>
+
+// Already logged in → dashboard
+if (localStorage.getItem("username")) {
+  window.location.href = "http://127.0.0.1:5000/dashboard";
+}
+
+// LOGIN
+async function login() {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  if (!username || !password) {
+    msg("⚠️ Enter username & password", "red");
+    return;
+  }
+
+  const res = await fetch("http://127.0.0.1:5000/login-user", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({username, password})
+  });
+
+  const data = await res.json();
+
+  if (res.status === 200) {
+    localStorage.setItem("username", username);
+    msg("✅ Login successful", "green");
+
+    setTimeout(() => {
+      window.location.href = "http://127.0.0.1:5000/dashboard";
+    }, 800);
+  } else {
+    msg(data.msg, "red");
+  }
+}
+
+// SIGNUP
+async function signup() {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  if (!username || !password) {
+    msg("⚠️ Enter username & password", "red");
+    return;
+  }
+
+  const res = await fetch("http://127.0.0.1:5000/signup", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({username, password})
+  });
+
+  const data = await res.json();
+  msg(data.msg, res.status === 200 ? "green" : "red");
+}
+
+// Helper
+function msg(text, color) {
+  const el = document.getElementById("msg");
+  el.innerText = text;
+  el.style.color = color;
+}
+
+</script>
+
+</body>
+</html>

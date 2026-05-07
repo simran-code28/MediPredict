@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Health Predictor</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: linear-gradient(to right, #74ebd5, #ACB6E5);
+  text-align: center;
+  margin: 0;
+}
+
+.container {
+  background: white;
+  width: 60%;
+  margin: 30px auto;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.topbar {
+  display:flex;
+  justify-content: space-between;
+}
+
+input, select {
+  display: block;
+  margin: 10px auto;
+  padding: 10px;
+  width: 60%;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 5px;
+  background: #3498db;
+  color: white;
+  border: none;
+}
+
+.card {
+  background:#f9f9f9;
+  padding:15px;
+  border-radius:10px;
+  margin:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="topbar">
+  <div id="user"></div>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<h1>🩺 Multi-Disease Prediction</h1>
+
+<!-- DIABETES -->
+<h2>Diabetes</h2>
+<input id="preg" type="number" placeholder="Pregnancies">
+<input id="glucose" type="number" placeholder="Glucose">
+<input id="bp" type="number" placeholder="BP">
+<input id="skin" type="number" placeholder="Skin">
+<input id="insulin" type="number" placeholder="Insulin">
+<input id="bmi" type="number" placeholder="BMI">
+<input id="dpf" type="number" placeholder="DPF">
+<input id="age" type="number" placeholder="Age">
+
+<!-- HEART -->
+<h2>Heart</h2>
+<input id="age_h" type="number" placeholder="Age">
+
+<select id="sex">
+<option value="1">Male</option>
+<option value="0">Female</option>
+</select>
+
+<select id="cp">
+<option value="0">Typical</option>
+<option value="1">Atypical</option>
+<option value="2">Non-anginal</option>
+<option value="3">Asymptomatic</option>
+</select>
+
+<input id="trestbps" type="number" placeholder="BP">
+<input id="chol" type="number" placeholder="Cholesterol">
+
+<select id="fbs">
+<option value="1">High</option>
+<option value="0">Normal</option>
+</select>
+
+<input id="restecg" type="number" placeholder="Rest ECG">
+<input id="thalach" type="number" placeholder="Max HR">
+
+<select id="exang">
+<option value="1">Yes</option>
+<option value="0">No</option>
+</select>
+
+<input id="oldpeak" type="number" placeholder="Oldpeak">
+<input id="slope" type="number" placeholder="Slope">
+<input id="ca" type="number" placeholder="CA">
+
+<select id="thal">
+<option value="1">Normal</option>
+<option value="2">Fixed</option>
+<option value="3">Reversible</option>
+</select>
+
+<!-- PCOS -->
+<h2>PCOS</h2>
+<input id="age_p" type="number" placeholder="Age">
+<input id="weight" type="number" placeholder="Weight">
+<input id="height" type="number" placeholder="Height">
+<input id="cycle" type="number" placeholder="Cycle">
+
+<select id="hair">
+<option value="1">Yes</option>
+<option value="0">No</option>
+</select>
+
+<br>
+
+<button onclick="predict()">Analyze</button>
+<button onclick="getHistory()">📜 History</button>
+
+<div id="result"></div>
+
+</div>
+
+<script>
+
+// 🔐 LOGIN CHECK (IMPORTANT)
+let username = localStorage.getItem("username");
+
+if (!username) {
+  window.location.href = "http://127.0.0.1:5000/login";
+}
+
+// show user
+document.getElementById("user").innerHTML = "👤 " + username;
+
+
+// LOGOUT
+function logout() {
+  localStorage.removeItem("username");
+  window.location.href = "http://127.0.0.1:5000/login";
+}
+
+
+// PREDICT
+async function predict() {
+
+  document.getElementById("result").innerHTML = "⏳ Analyzing...";
+
+  let diabetes = [
+    +preg.value||0,+glucose.value||0,+bp.value||0,
+    +skin.value||0,+insulin.value||0,+bmi.value||0,
+    +dpf.value||0,+age.value||0
+  ];
+
+  let heart = [
+    +age_h.value||0,+sex.value||0,+cp.value||0,
+    +trestbps.value||0,+chol.value||0,+fbs.value||0,
+    +restecg.value||0,+thalach.value||0,+exang.value||0,
+    +oldpeak.value||0,+slope.value||0,+ca.value||0,+thal.value||0
+  ];
+
+  let pcos = [
+    +age_p.value||0,+weight.value||0,
+    +height.value||0,+cycle.value||0,+hair.value||0
+  ];
+
+  const res = await fetch("http://127.0.0.1:5000/predict", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({username, diabetes, heart, pcos})
+  });
+
+  const data = await res.json();
+
+  document.getElementById("result").innerHTML =
+  `
+  <div class="card">
+    <h3>🩺 Result</h3>
+
+    <p><b>Diabetes:</b> ${data.diabetes.result} (${data.diabetes.risk})</p>
+    <p>${data.diabetes.advice}</p>
+
+    <p><b>Heart:</b> ${data.heart.result} (${data.heart.risk})</p>
+    <p>${data.heart.advice}</p>
+
+    <p><b>PCOS:</b> ${data.pcos.result} (${data.pcos.risk})</p>
+    <p>${data.pcos.advice}</p>
+  </div>
+  `;
+}
+
+
+// HISTORY
+async function getHistory() {
+
+  const res = await fetch("http://127.0.0.1:5000/history", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({username})
+  });
+
+  const data = await res.json();
+
+  let html = "<h3>📜 History</h3>";
+
+  if (data.length === 0) {
+    html += "No history";
+  } else {
+    data.forEach((item,i)=>{
+      html += `
+      <div class="card">
+        <b>Record ${i+1}</b><br>
+        🩺 ${item.diabetes.result}<br>
+        ❤️ ${item.heart.result}<br>
+        🧬 ${item.pcos.result}
+      </div>`;
+    });
+  }
+
+  document.getElementById("result").innerHTML = html;
+}
+
+</script>
+
+</body>
+</html>
